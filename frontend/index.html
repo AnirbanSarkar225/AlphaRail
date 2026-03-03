@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlphaRail Dashboard</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: white;
+      overflow-x: hidden;
+      background: url("./istockphoto-145132481-612x612.jpg") center/cover no-repeat fixed;
+    }
+
+    /* LANDING PAGE */
+    .landing-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: url("./istockphoto-145132481-612x612.jpg") center/cover no-repeat;
+      position: relative;
+      text-align: center;
+      color: white;
+    }
+    .landing-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+    }
+    .landing-content {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+    }
+    #landingLoginBtn {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      background: #00cccc;
+      font-weight: bold;
+      color: #003344;
+      cursor: pointer;
+      z-index: 2;
+    }
+    #landingLoginBtn:hover {
+      background: #5ad7db;
+      transform: scale(1.05);
+    }
+    .landing-search input {
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      margin-right: 0.5rem;
+    }
+    .landing-search button {
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #5ad7db;
+      color: #003344;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .landing-search button:hover { background: #00cccc; }
+    .landing-panel {
+      margin-top: 2rem;
+      padding: 1rem;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      text-align: left;
+    }
+    .landing-panel textarea {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      margin-top: 0.5rem;
+    }
+    .landing-panel button {
+      margin-top: 0.5rem;
+      padding: 0.6rem 1rem;
+      background: #ff5555;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+    .landing-panel button:hover { background: #ff7777; }
+
+    /* AUTH PAGE */
+    .auth-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: url("./istockphoto-145132481-612x612.jpg") center/cover no-repeat;
+      position: relative;
+    }
+    .auth-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+    }
+    .auth-box {
+      position: relative;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(12px);
+      padding: 2rem 3rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      width: 350px;
+      animation: fadeIn 1s ease-in-out;
+      z-index: 2;
+    }
+    .auth-box h2 { margin-bottom: 1rem; color: #5ad7db; font-size: 1.8rem; }
+    .auth-box input {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      font-size: 1rem;
+      transition: 0.3s;
+    }
+    .auth-box input:focus { background: rgba(255, 255, 255, 0.25); box-shadow: 0 0 8px #5ad7db; }
+    .auth-box button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #5ad7db, #0099aa);
+      color: #003344;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .auth-box button:hover { background: linear-gradient(135deg, #66ffff, #00cccc); transform: scale(1.05); }
+    #toggleAuth { margin-top: 1rem; font-size: 0.9rem; }
+    #toggleAuth a { color: #ffeb3b; text-decoration: none; font-weight: bold; }
+    .error { color: #ff5555; font-size: 0.9rem; margin-top: 0.5rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* DASHBOARD */
+    header {
+      padding: 2rem;
+      text-align: center;
+      background: url("./istockphoto-145132481-612x612.jpg") center/cover no-repeat;
+      position: relative;
+      color: #fff;
+    }
+    header::before { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+    header h1, header p { position: relative; z-index: 1; }
+
+    #logoutBtn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      padding: 0.6rem 1rem;
+      background: #ff5555;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+      z-index: 2;
+    }
+    #logoutBtn:hover { background: #ff7777; transform: scale(1.05); }
+
+    /* KPI METRICS */
+    .metrics-container {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin: 2rem auto;
+      flex-wrap: wrap;
+    }
+    .metric {
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(8px);
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      min-width: 150px;
+      font-size: 1.2rem;
+      text-align: center;
+      transition: 0.3s;
+      color: #fff;
+      font-weight: 600;
+    }
+    .metric:hover { transform: scale(1.05); box-shadow: 0 0 15px #5ad7db; }
+    .dashboard {
+      margin: 2rem auto;
+      padding: 2rem;
+      width: 85%;
+      background: rgba(0, 0, 0, 0.55); /* ✅ dark overlay instead of white */
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      color: white;
+    }
+
+    /* CHART SECTION */
+    .chart-section {
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem;
+      border-radius: 15px;
+      margin-top: 2rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .chart-section h2 { margin-bottom: 1rem; color: #5ad7db; }
+    #twinChart { background: rgba(0, 0, 0, 0.25); border-radius: 12px; padding: 1rem; }
+
+    /* OTHER PANELS */
+    .live-status { margin-top: 1rem; font-size: 1rem; color: #7dff7d; text-align: center; }
+    .panel {
+      margin: 2rem auto;
+      width: 80%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: left;
+      color: white;
+    }
+    .panel h3 { margin-bottom: 0.5rem; color: #5ad7db; }
+    .panel ul { list-style: none; padding-left: 1rem; margin: 0; }
+    .panel li { margin: 0.4rem 0; padding: 0.3rem 0.5rem; border-left: 3px solid #5ad7db; }
+    #trainSearch { padding: 0.5rem; border-radius: 5px; border: none; margin-right: 0.5rem; }
+    #searchResult { margin-top: 1rem; font-weight: bold; color: #ffeb3b; }
+    .station-search { margin-top: 1.5rem; }
+    .station-search input { padding: 0.5rem; border-radius: 5px; border: none; margin-right: 0.5rem; }
+    .station-search button, .dashboard button {
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      border: none;
+      background-color: #5ad7db;
+      color: #003344;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .train-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255,255,255,0.1);
+      padding: 0.5rem;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+    }
+    .train-card img { width: 40px; height: 40px; }
+  </style>
+</head>
+<body>
+  <div id="landingPage" class="landing-container">
+    <button id="landingLoginBtn">Login</button>
+    <div class="landing-content">
+      <h1>🚆 Welcome to AlphaRail</h1>
+      <p>Check train schedules & report emergencies quickly</p>
+
+      <div class="landing-search">
+        <input type="text" id="landingTrainSearch" placeholder="Enter Train No." />
+        <button onclick="landingSearchTrain()">Search</button>
+        <p id="landingSearchResult"></p>
+      </div>
+
+      <div class="landing-panel">
+        <h3>🚨 Report Emergency</h3>
+        <textarea id="emergencyInput" placeholder="Describe the emergency..."></textarea>
+        <button onclick="submitEmergency()">Send Report</button>
+
+        <h3>📢 Instructions from Control</h3>
+        <ul id="instructionList"><li>No instructions yet</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="authPage" class="auth-container" style="display:none;">
+    <div class="auth-box">
+      <h2 id="authTitle">Login</h2>
+
+      <form id="loginForm" class="auth-form">
+        <input type="text" id="loginUsername" placeholder="🚆 Username" required />
+        <input type="password" id="loginPassword" placeholder="🔑 Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <p><a href="#" id="forgotPasswordLink" style="color:#ffeb3b; font-size:0.9rem;">Forgot password?</a></p>
+
+      <form id="forgotPasswordForm" class="auth-form" style="display:none;">
+        <input type="text" id="resetIdentifier" placeholder="📧 Enter your Email or Username" required />
+        <button type="submit">Send Reset Link</button>
+        <p id="resetMsg" style="margin-top:0.5rem; font-size:0.9rem;"></p>
+      </form>
+
+      <form id="registerForm" class="auth-form" style="display:none;">
+        <input type="text" id="regName" placeholder="👤 Name" required />
+        <input type="text" id="regUsername" placeholder="🚆 Username" required />
+        <input type="email" id="regEmail" placeholder="📧 E-mail ID" required />
+        <input type="password" id="regPassword" placeholder="🔑 Password" required />
+        <span id="passwordStrength" style="display:block; font-size:0.9rem; margin-bottom:0.5rem;"></span>
+        <input type="password" id="regConfirmPassword" placeholder="🔑 Re-enter Password" required />
+        <input type="tel" id="regPhone" placeholder="📱 Phone No." required />
+        <input type="text" id="regCity" placeholder="🏙 City/Town" required />
+        <button type="submit">Register</button>
+      </form>
+
+      <p id="authError" class="error"></p>
+      <p id="toggleAuth">Don't have an account? <a href="#">Register</a></p>
+    </div>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <header>
+      <button id="logoutBtn">Logout</button>
+      <h1>Maximize Section Throughput with an AI-Powered Digital Twin</h1>
+      <p>AlphaRail replicates live train movements...</p>
+    </header>
+
+    <div class="metrics-container">
+      <div class="metric"><span id="kpiThroughput">--</span><br />Throughput gain</div>
+      <div class="metric"><span id="kpiDelay">--</span><br />Delay reduction</div>
+      <div class="metric">100%<br />Software-only deployment</div>
+    </div>
+
+    <div class="dashboard">
+      <p>Live section: Howrah - New Delhi
+        <span id="lastUpdated" style="float:right">Updated: --</span>
+      </p>
+
+      <input type="text" id="trainSearch" placeholder="Search by Train No. / Train Name" />
+      <button onclick="searchTrain()">Search</button>
+      <p id="searchResult"></p>
+
+      <div class="station-search">
+        <input type="text" id="fromStation" placeholder="From Station" />
+        <input type="text" id="toStation" placeholder="To Station" />
+        <button onclick="findTrainsBetween()">Show Trains</button>
+      </div>
+      <div id="stationResults"></div>
+
+      <div class="chart-section">
+        <h2>Real-time Traffic Digital Twin</h2>
+        <canvas id="twinChart"></canvas>
+        <div class="metrics-container">
+          <div class="metric"><span id="activeTrains">0</span><br />Active trains</div>
+          <div class="metric"><span id="conflictsPrevented">0</span><br />Conflicts prevented</div>
+        </div>
+        <div class="live-status" id="liveStatus">⏳ Connecting...</div>
+      </div>
+    </div>
+    <div id="routeResults" class="panel">
+      <h3>🚆 Route-wise Train Positions</h3>
+     <p>Loading...</p>
+    </div>
+    <div class="panel">
+      <h3>🚑 Emergencies</h3>
+      <ul id="emergencyList"><li>No emergencies reported</li></ul>
+    </div>
+
+    <div class="panel">
+      <h3>🌪 Disasters</h3>
+      <ul id="disasterList"><li>No disasters reported</li></ul>
+    </div>
+
+    <div class="panel">
+      <h3>📋 Suggested Plan</h3>
+      <ul id="planList"><li>No plan yet</li></ul>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

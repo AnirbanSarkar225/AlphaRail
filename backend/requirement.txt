@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+requests
+sqlalchemy[asyncio]
+asyncpg
+aiosqlite
+passlib[bcrypt]
+PyJWT
+python-dotenv
