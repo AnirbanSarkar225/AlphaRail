@@ -118,6 +118,7 @@
     .auth-box {
       position: relative;
       background: rgba(0, 0, 0, 0.65);
+      -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
       padding: 2rem 3rem;
       border-radius: 20px;
@@ -156,8 +157,10 @@
     }
     .auth-box button:hover { background: linear-gradient(135deg, #66ffff, #00cccc); transform: scale(1.05); }
     #toggleAuth { margin-top: 1rem; font-size: 0.9rem; }
-    #toggleAuth a { color: #ffeb3b; text-decoration: none; font-weight: bold; }
+    #toggleAuth a, .forgot-link { color: #ffeb3b; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
     .error { color: #ff5555; font-size: 0.9rem; margin-top: 0.5rem; }
+    .reset-msg { margin-top: 0.5rem; font-size: 0.9rem; }
+    .password-strength { display: block; font-size: 0.9rem; margin-bottom: 0.5rem; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
     /* DASHBOARD */
@@ -197,6 +200,7 @@
     }
     .metric {
       background: rgba(0, 0, 0, 0.55);
+      -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
       padding: 1rem 2rem;
       border-radius: 12px;
@@ -213,6 +217,7 @@
       padding: 2rem;
       width: 85%;
       background: rgba(0, 0, 0, 0.55); /* ✅ dark overlay instead of white */
+      -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
       border-radius: 15px;
       color: white;
@@ -221,6 +226,7 @@
     /* CHART SECTION */
     .chart-section {
       background: rgba(0, 0, 0, 0.35);
+      -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
       padding: 1.5rem;
       border-radius: 15px;
@@ -237,6 +243,7 @@
       margin: 2rem auto;
       width: 80%;
       background: rgba(0, 0, 0, 0.4);
+      -webkit-backdrop-filter: blur(6px);
       backdrop-filter: blur(6px);
       padding: 1rem;
       border-radius: 12px;
@@ -269,6 +276,8 @@
       margin-top: 0.5rem;
     }
     .train-card img { width: 40px; height: 40px; }
+    .hidden { display: none !important; }
+    .float-right { float: right; }
   </style>
 </head>
 <body>
@@ -295,7 +304,7 @@
     </div>
   </div>
 
-  <div id="authPage" class="auth-container" style="display:none;">
+  <div id="authPage" class="auth-container hidden">
     <div class="auth-box">
       <h2 id="authTitle">Login</h2>
 
@@ -304,20 +313,20 @@
         <input type="password" id="loginPassword" placeholder="🔑 Password" required />
         <button type="submit">Login</button>
       </form>
-      <p><a href="#" id="forgotPasswordLink" style="color:#ffeb3b; font-size:0.9rem;">Forgot password?</a></p>
+      <p><a href="#" id="forgotPasswordLink" class="forgot-link">Forgot password?</a></p>
 
-      <form id="forgotPasswordForm" class="auth-form" style="display:none;">
+      <form id="forgotPasswordForm" class="auth-form hidden">
         <input type="text" id="resetIdentifier" placeholder="📧 Enter your Email or Username" required />
         <button type="submit">Send Reset Link</button>
-        <p id="resetMsg" style="margin-top:0.5rem; font-size:0.9rem;"></p>
+        <p id="resetMsg" class="reset-msg"></p>
       </form>
 
-      <form id="registerForm" class="auth-form" style="display:none;">
+      <form id="registerForm" class="auth-form hidden">
         <input type="text" id="regName" placeholder="👤 Name" required />
         <input type="text" id="regUsername" placeholder="🚆 Username" required />
         <input type="email" id="regEmail" placeholder="📧 E-mail ID" required />
         <input type="password" id="regPassword" placeholder="🔑 Password" required />
-        <span id="passwordStrength" style="display:block; font-size:0.9rem; margin-bottom:0.5rem;"></span>
+        <span id="passwordStrength" class="password-strength"></span>
         <input type="password" id="regConfirmPassword" placeholder="🔑 Re-enter Password" required />
         <input type="tel" id="regPhone" placeholder="📱 Phone No." required />
         <input type="text" id="regCity" placeholder="🏙 City/Town" required />
@@ -329,7 +338,7 @@
     </div>
   </div>
 
-  <div id="dashboard" style="display:none">
+  <div id="dashboard" class="hidden">
     <header>
       <button id="logoutBtn">Logout</button>
       <h1>Maximize Section Throughput with an AI-Powered Digital Twin</h1>
@@ -344,7 +353,7 @@
 
     <div class="dashboard">
       <p>Live section: Howrah - New Delhi
-        <span id="lastUpdated" style="float:right">Updated: --</span>
+        <span id="lastUpdated" class="float-right">Updated: --</span>
       </p>
 
       <input type="text" id="trainSearch" placeholder="Search by Train No. / Train Name" />
