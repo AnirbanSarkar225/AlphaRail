@@ -33,12 +33,11 @@ async function landingSearchTrain() {
     resultBox.textContent = `⚠ ${err.message}. Please check the train number.`;
   }
 }
-// Emergency reporting (landing page)
-function submitEmergency() {
+// FIX JS-5: submitEmergency now POSTs to the backend
+async function submitEmergency() {
   const msg = document.getElementById("emergencyInput").value.trim();
   const list = document.getElementById("instructionList");
   if (msg === "") {
-    // ✅ Use SweetAlert for the error message too
     Swal.fire({
       title: 'Wait!',
       text: 'Please describe the emergency before submitting.',
@@ -50,20 +49,28 @@ function submitEmergency() {
     return;
   }
 
-  // ✅ UPDATED: Replaced the old alert with a custom one
+  try {
+    await fetch(`${API_BASE_URL}/emergency`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description: msg }),
+    });
+  } catch (_) {
+    console.warn("Could not reach backend for emergency report.");
+  }
+
   Swal.fire({
     title: '💡 Report Sent!',
     text: 'Your emergency report has been received by the control center.',
     icon: 'success',
     confirmButtonText: 'OK',
-    background: '#2c3e50', // Dark background
-    color: '#ffffff',      // White text
+    background: '#2c3e50',
+    color: '#ffffff',
     confirmButtonColor: '#5ad7db'
   });
 
   document.getElementById("emergencyInput").value = "";
 
-  // Display in dashboard emergency panel too (will be overwritten by fetch, but good for demo)
   const emergencyList = document.getElementById("emergencyList");
   if (emergencyList.children.length > 0 && emergencyList.children[0].textContent === "No emergencies reported") {
     emergencyList.innerHTML = "";
@@ -72,7 +79,6 @@ function submitEmergency() {
   li.textContent = `Manual Report: ${msg}`;
   emergencyList.appendChild(li);
 
-  // Higher-ups can send instructions here (simulation)
   list.innerHTML = "<li>Reduce speed to 30km/h until cleared.</li>";
 }
 
@@ -148,10 +154,11 @@ loginForm.addEventListener("submit", (e) => {
     return;
   }
 
-  // ✅ Fake login success
+  // FIX JS-4 + JS-6: init dashboard only after login so chart canvas is visible
   authError.textContent = "";
   authPage.style.display = "none";
   dashboard.style.display = "block";
+  initDashboard();
 });
 
 // Register form submit
@@ -231,89 +238,96 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 });
 
 // ---------------------------
-// CHART: Real-time Traffic Digital Twin
+// DASHBOARD INIT
+// FIX JS-4 + JS-6: everything below runs only after the user logs in
 // ---------------------------
-const ctx = document.getElementById("twinChart").getContext("2d");
-
+let twinChart = null;
+let chartIntervalId = null;
+let routeIntervalId = null;
+let metricsIntervalId = null;
 let labels = [];
 let activeTrainData = [];
 let conflictsData = [];
+let _lastMetrics = { active_trains: 0, conflicts_prevented: 0 };
 
-const twinChart = new Chart(ctx, {
-  type: "line",
-  data: {
-    labels: labels,
-    datasets: [
-      {
-        label: "Active Trains",
-        data: activeTrainData,
-        borderColor: "#5ad7db",
-        backgroundColor: "rgba(90, 215, 219, 0.2)",
-        fill: true,
-        tension: 0.3
+function initDashboard() {
+  if (!twinChart) {
+    // FIX JS-6: ctx created here, not at module parse time (canvas was hidden)
+    const ctx = document.getElementById("twinChart").getContext("2d");
+    labels = []; activeTrainData = []; conflictsData = [];
+    twinChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Active Trains", data: activeTrainData, borderColor: "#5ad7db", backgroundColor: "rgba(90,215,219,0.2)", fill: true, tension: 0.3 },
+          { label: "Conflicts Prevented", data: conflictsData, borderColor: "#ffeb3b", backgroundColor: "rgba(255,235,59,0.2)", fill: true, tension: 0.3 }
+        ]
       },
-      {
-        label: "Conflicts Prevented",
-        data: conflictsData,
-        borderColor: "#ffeb3b",
-        backgroundColor: "rgba(255, 235, 59, 0.2)",
-        fill: true,
-        tension: 0.3
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#fff" } } },
+        scales: {
+          x: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.2)" } },
+          y: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.2)" } }
+        }
       }
-    ]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { labels: { color: "#fff" } }
-    },
-    scales: {
-      x: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.2)" } },
-      y: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.2)" } }
-    }
+    });
   }
-});
+  // FIX JS-4: load data only after login
+  loadRoutes();
+  loadMetrics();
+  clearInterval(chartIntervalId);
+  clearInterval(routeIntervalId);
+  clearInterval(metricsIntervalId);
+  routeIntervalId = setInterval(loadRoutes, 5000);
+  metricsIntervalId = setInterval(loadMetrics, 10000);
+  chartIntervalId = setInterval(updateChart, 10000);
+}
+
+// FIX JS-3: updateChart uses real backend values cached by loadMetrics
 function updateChart() {
   const now = new Date().toLocaleTimeString();
   labels.push(now);
   if (labels.length > 10) labels.shift();
 
-  // 🔹 Replace with backend values later
-  const activeTrains = Math.floor(Math.random() * 20) + 1;
-  const conflicts = Math.floor(Math.random() * 5);
+  const activeTrains = _lastMetrics.active_trains;
+  const conflicts = _lastMetrics.conflicts_prevented;
   activeTrainData.push(activeTrains);
   conflictsData.push(conflicts);
-
   if (activeTrainData.length > 10) activeTrainData.shift();
   if (conflictsData.length > 10) conflictsData.shift();
 
   document.getElementById("activeTrains").textContent = activeTrains;
   document.getElementById("conflictsPrevented").textContent = conflicts;
-
-  twinChart.update();
+  if (twinChart) twinChart.update();
 }
-
-// 🔄 Update every 10 seconds
-setInterval(updateChart, 10000);
 
 // ---------------------------
 // TRAIN SEARCH FUNCTIONS
 // ---------------------------
 
-// Dashboard: Search by train no/name
-function searchTrain() {
+// FIX JS-1: searchTrain now calls the real backend
+async function searchTrain() {
   const query = document.getElementById("trainSearch").value.trim();
   const result = document.getElementById("searchResult");
   if (query === "") {
     result.textContent = "⚠ Please enter a train no. or name.";
     return;
   }
-  // 🔹 Replace with real backend lookup
-  result.textContent = `Train ${query} found! Scheduled departure 11:15 AM, arrival 3:45 PM.`;
+  result.textContent = "Searching...";
+  try {
+    const res = await fetch(`${API_BASE_URL}/train/${encodeURIComponent(query)}`);
+    if (!res.ok) throw new Error("Train not found");
+    const train = await res.json();
+    result.innerHTML = `<strong>${train.name} (${train.train_no})</strong> — ${train.route}<br>Departure: ${train.departure_time} | Arrival: ${train.arrival_time}`;
+  } catch (err) {
+    result.textContent = `⚠ ${err.message}. Please check the train number.`;
+  }
 }
 
-// Dashboard: Find trains between two stations
-function findTrainsBetween() {
+// FIX JS-2: findTrainsBetween now calls the real backend
+async function findTrainsBetween() {
   const from = document.getElementById("fromStation").value.trim();
   const to = document.getElementById("toStation").value.trim();
   const resultBox = document.getElementById("stationResults");
@@ -321,23 +335,23 @@ function findTrainsBetween() {
     resultBox.textContent = "⚠ Please enter both stations.";
     return;
   }
-  // 🔹 Replace with backend call
-  resultBox.innerHTML = `
-    <div class="train-card">
-      <img src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" alt="train" />
-      <div>
-        <strong>Train 12345</strong> - Express<br>
-        ${from} ➝ ${to} | Departure: 9:00 AM | Arrival: 1:00 PM
-      </div>
-    </div>
-    <div class="train-card">
-      <img src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" alt="train" />
-      <div>
-        <strong>Train 67890</strong> - Superfast<br>
-        ${from} ➝ ${to} | Departure: 2:00 PM | Arrival: 6:15 PM
-      </div>
-    </div>
-  `;
+  resultBox.textContent = "Searching...";
+  try {
+    const res = await fetch(`${API_BASE_URL}/trains_between?from_station=${encodeURIComponent(from)}&to_station=${encodeURIComponent(to)}`);
+    if (!res.ok) throw new Error("Could not fetch trains");
+    const trains = await res.json();
+    if (!trains || trains.length === 0) {
+      resultBox.textContent = `⚠ No trains found between ${from} and ${to}.`;
+      return;
+    }
+    resultBox.innerHTML = trains.map(t => `
+      <div class="train-card">
+        <img src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" alt="train" />
+        <div><strong>${t.name} (${t.train_no})</strong><br>${from} ➝ ${to} | Departure: ${t.departure} | Arrival: ${t.arrival}</div>
+      </div>`).join("");
+  } catch (err) {
+    resultBox.textContent = `⚠ ${err.message}.`;
+  }
 }
 
 // ---------------------------
@@ -414,11 +428,15 @@ async function loadMetrics() {
     if (!res.ok) throw new Error(`Network response was not ok (${res.status})`);
     const data = await res.json();
 
-    // KPI updates
+    // FIX JS-3: cache real values so updateChart() can use them
+    _lastMetrics.active_trains = data.active_trains ?? 0;
+    _lastMetrics.conflicts_prevented = data.conflicts_prevented ?? 0;
+
     document.getElementById("kpiThroughput").textContent = data.kpi_throughput_gain || "--";
     document.getElementById("kpiDelay").textContent = data.kpi_delay_reduction || "--";
+    document.getElementById("activeTrains").textContent = data.active_trains ?? "--";
+    document.getElementById("conflictsPrevented").textContent = data.conflicts_prevented ?? "--";
 
-    // Emergencies
     const emergencyList = document.getElementById("emergencyList");
     emergencyList.innerHTML = "";
     if (!data.emergencies || data.emergencies.length === 0) {
@@ -426,7 +444,9 @@ async function loadMetrics() {
     } else {
       data.emergencies.forEach(e => {
         const li = document.createElement("li");
-        li.textContent = `${e.type} on Train ${e.train_no} (Status: ${e.status})`;
+        li.textContent = e.description
+          ? `User Report: ${e.description}`
+          : `${e.type} on Train ${e.train_no} (Status: ${e.status})`;
         emergencyList.appendChild(li);
       });
     }
@@ -460,15 +480,5 @@ async function loadMetrics() {
   }
 }
 
-// ---------------------------
-// INITIAL LOAD & REFRESH INTERVALS
-// ---------------------------
-function initialLoad() {
-    loadRoutes();
-    loadMetrics();
-}
-
-// 🔄 Auto-refresh intervals
-setInterval(loadRoutes, 5000);
-setInterval(loadMetrics, 10000);
-window.addEventListener("load", initialLoad);
+// FIX JS-4: Removed window.addEventListener("load", initialLoad)
+// initDashboard() is called only on successful login (see loginForm submit above)

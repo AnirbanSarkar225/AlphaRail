@@ -1,12 +1,17 @@
+import os
 import requests
 from typing import Dict, Any, Tuple, Optional
-RAPIDAPI_KEY = "cbc7295847mshd40547ea0e3880ep1a739djsn3037bcf84a15" 
-RAPIDAPI_HOST = "indian-railways-pnr-running-status.p.rapidapi.com" 
+
+# FIX: Never hardcode API keys in source. Set env var before running:
+#   set RAPIDAPI_KEY=your_key_here   (Windows)
+#   export RAPIDAPI_KEY=your_key_here (Linux/Mac)
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
+RAPIDAPI_HOST = "indian-railways-pnr-running-status.p.rapidapi.com"
 BASE_URL = f"https://{RAPIDAPI_HOST}"
 api_session = requests.Session()
 api_session.headers.update({
     "X-RapidAPI-Key": RAPIDAPI_KEY,
-    "X-RapidAPI-Host": RAPIDAPI_HOST
+    "X-RapidAPI-Host": RAPIDAPI_HOST,
 })
 def get_train_schedule(train_no: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """
@@ -18,7 +23,9 @@ def get_train_schedule(train_no: str) -> Tuple[Optional[Dict[str, Any]], Optiona
     Returns:
         A tuple containing (schedule_data, error_message).
     """
-    # This API takes the train number as part of the URL path itself.
+    if not RAPIDAPI_KEY:
+        return None, "RAPIDAPI_KEY environment variable is not set"
+
     endpoint_url = f"{BASE_URL}/schedule/train/{train_no}"
 
     try:
