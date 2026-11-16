@@ -1,10 +1,10 @@
-# 🚆 AlphaRail — Railway Operations & Telemetry Digital Twin
+# AlphaRail — Railway Operations & Telemetry Digital Twin
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-0.104+-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/SQLAlchemy-AsyncIO-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy">
-  <img src="https://img.shields.io/badge/Database-aiosqlite%20%7C%20asyncpg-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="Database">
+  <img src="https://img.shields.io/badge/Database-PostgreSQL_%7C_asyncpg-316192?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Frontend-Vanilla_JS%20%7C%20Chart.js-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript">
   <img src="https://img.shields.io/badge/System-Digital_Twin_Prototype-2563EB?style=flat-square" alt="Digital Twin">
   <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License">
@@ -12,9 +12,9 @@
 
 ---
 
-## 📌 Executive Overview
+## Executive Overview
 
-**AlphaRail** is an operational digital twin prototype and telemetry dashboard engineered to monitor, simulate, and visualize railway operations across primary Indian railway corridors (e.g. Howrah – New Delhi, Patna – New Delhi). Built with high-performance asynchronous Python (**FastAPI** and **SQLAlchemy AsyncIO**), AlphaRail provides:
+**AlphaRail** is an operational digital twin prototype and telemetry dashboard engineered to monitor, simulate, and visualize railway operations across primary Indian railway corridors (e.g. Howrah – New Delhi, Patna – New Delhi). Built with high-performance asynchronous Python (**FastAPI** and **SQLAlchemy AsyncIO** with **PostgreSQL**), AlphaRail provides:
 
 1. **Live Corridor Telemetry Simulation:** Tracking relative train positions, headway separation, and scheduled vs. estimated station arrivals.
 2. **Environmental Risk Assessment:** Integrating real-time meteorological metrics via OpenWeatherMap to calculate weather hazard indices (e.g., fog visibility, torrential rainfall, extreme heat).
@@ -26,7 +26,7 @@
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+## System Architecture & Data Flow
 
 AlphaRail decouples high-throughput async API endpoints from external meteorological and third-party railway feeds:
 
@@ -47,7 +47,7 @@ flowchart TD
     end
 
     subgraph Persistence["Persistence Tier (Async DB Engine)"]
-        DB[("Async Database (SQLite via aiosqlite / PostgreSQL via asyncpg)")]
+        DB[("PostgreSQL Database (asyncpg)")]
     end
 
     subgraph External["External APIs"]
@@ -64,7 +64,7 @@ flowchart TD
 
 ---
 
-## 🔌 Verified REST API Reference
+## Verified REST API Reference
 
 All endpoints return JSON responses and support cross-origin requests (CORS enabled):
 
@@ -82,7 +82,7 @@ All endpoints return JSON responses and support cross-origin requests (CORS enab
 
 ---
 
-## 📂 Repository Layout
+## Repository Layout
 
 ```
 AlphaRail/
@@ -109,10 +109,11 @@ AlphaRail/
 
 ---
 
-## ⚡ Installation & Local Deployment
+## Installation & Local Deployment
 
 ### Prerequisites
 * Python 3.10, 3.11, or 3.12
+* PostgreSQL 14+ (Local or Cloud instance)
 * Modern web browser (Chrome, Firefox, Edge)
 
 ### 1. Set Up Backend Virtual Environment
@@ -136,7 +137,10 @@ Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-*(The system runs immediately on local async SQLite out-of-the-box without requiring third-party API keys).*
+Configure your PostgreSQL connection URL:
+```env
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/alpharail
+```
 
 ### 3. Launch the Backend API
 ```bash
@@ -156,14 +160,14 @@ Visit `http://localhost:3000` to interact with the live telemetry dashboard.
 
 ---
 
-## 🔒 Security & Data Integrity
+## Security & Data Integrity
 
-1. **Non-Blocking Asynchronous IO:** Database transactions use async session contexts (`AsyncSession`) and async drivers (`aiosqlite`, `asyncpg`), preventing long-running database queries from blocking high-frequency telemetry polling.
+1. **Non-Blocking Asynchronous IO:** Database transactions use async session contexts (`AsyncSession`) and PostgreSQL async drivers (`asyncpg`), preventing long-running database queries from blocking high-frequency telemetry polling.
 2. **Payload Validation:** Inbound requests are validated strictly against Pydantic models (`QueryRequest`, `EmergencyRequest`), discarding malformed JSON payloads before reaching business services.
 3. **CORS Isolation:** Development enables wildcard origins; production deployments can restrict `allow_origins` to trusted domain origins.
 
 ---
 
-## 📄 Technical Interview Preparation
+## Technical Interview Preparation
 
 For deep-dive architectural trade-offs, digital twin telemetry modeling, and 15 source-code grounded technical interview questions, see [docs/INTERVIEW_PREP.md](docs/INTERVIEW_PREP.md).
